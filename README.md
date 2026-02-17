@@ -118,3 +118,7 @@ sudo ip link set dev enp114s0f1 up
 If you are struggling to approach physical line-rate (e.g., 14.88 Mpps for 10GbE), try increasing the batch size.
 * `-b 64`: Good balance of latency and throughput.
 * `-b 128`: Maximizes throughput by minimizing the number of `poll()` syscalls and wakeups to the hardware driver.
+
+---
+## ⚖️ Disclaimer
+**Use at your own risk.** This tool is provided "as-is" without any warranty. Traffic generation can impact network stability; ensure you have permission before testing on any network. The author is not responsible for any damages, legal issues, or network outages caused by the use of this software.
