@@ -43,9 +43,18 @@ Traditionally, to achieve wire-speed packet generation in userspace, developers 
 
 ## 🚀 Installation 
 
+ipblower binary is available as a docker container: 
+```bash
+docker pull ghcr.io/rstade/ipblower:latest
+```
+
 ## 💻 Usage
 
 Because `ipblower` interacts directly with the NIC hardware and loads eBPF programs, it must be run with `sudo` or `CAP_NET_ADMIN` privileges.
+Example for running with docker:
+```
+docker run -it --rm   --network host   --privileged   --ulimit memlock=-1   -e RUST_LOG=info   ghcr.io/rstade/ipblower:latest -i enp114s0f1np1 -p 1M -b 128
+```
 
 ### CLI Options
 
