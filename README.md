@@ -1,6 +1,6 @@
 # ipblower 🌪️
 
-**ipblower** is a blazingly fast, high-performance packet generator written in Rust. It leverages Linux's **AF_XDP** (eXpress Data Path) socket family to bypass the standard kernel network stack, allowing it to saturate at least 10GbE links using a single CPU core with 60 bytes packets (TCP SYN).
+**ipblower** is a blazingly fast, high-performance packet generator written in Rust. It leverages Linux's **AF_XDP** (eXpress Data Path) socket family to bypass the standard kernel network stack, allowing it to almost saturate at least 10GbE links using a single CPU core with 60 bytes packets (TCP SYN).
 
 This has been tested on 
 * Intel Corporation Ethernet 10G 2P X520 Adapter (rev 01), 
