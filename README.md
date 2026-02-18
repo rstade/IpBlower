@@ -72,12 +72,14 @@ Options:
   -b, --batch-sz <BATCH_SZ>    Batch size for processing packets [default: 64]
       --no-zerocopy            Disable zerocopy (enabled by default)
   -c, --core <CORE>            CPU core ID for the worker thread [default: 0]
-  -d, --dst <DST>              Destination IP address for generated packets
+   d, --dst <DST>              Destination IP and MAC address (format: <ip>-<mac>)
+                               Examples: 192.168.1.1-aa:bb:cc:dd:ee:ff
+                                        192.168.1.1 (MAC uses default)
+                                        -aa:bb:cc:dd:ee:ff (IP uses default)
   -h, --help                   Print help
   -V, --version                Print version
 
 ```
-
 ### Examples
 
 **1. The "Firehose" (Maximum Speed)**
@@ -92,11 +94,30 @@ Generate 5 Million Packets Per Second (5Mpps) using a batch size of 64 to optimi
 sudo ipblower -i enp114s0f1 -p 5M -b 64
 ```
 
-**3. Software Fallback / Compatibility Mode**
+**3. Custom Destination IP and MAC Address**
+Specify both destination IP address and MAC address for generated packets:
+```bash
+sudo ipblower -i enp114s0f1 -d 192.168.1.100-aa:bb:cc:dd:ee:ff
+```
+
+**4. Custom Destination IP (MAC uses default)**
+Specify only the destination IP address, MAC will use default `08:bf:b8:0a:0b:0c`:
+```bash
+sudo ipblower -i enp114s0f1 -d 192.168.1.100
+```
+
+**5. Custom Destination MAC (IP uses default)**
+Specify only the destination MAC address, IP will use default `192.168.177.1`:
+```bash
+sudo ipblower -i enp114s0f1 -d -aa:bb:cc:dd:ee:ff
+```
+
+**6. Software Fallback / Compatibility Mode**
 If your NIC driver does not support hardware Zero-Copy, or if you are testing on a virtual interface (veth), use the `--no-zerocopy` flag to fall back to standard kernel SKB copy-mode.
 ```bash
 sudo ipblower -i enp114s0f1 --no-zerocopy
 ```
+
 
 ---
 
