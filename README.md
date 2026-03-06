@@ -1,6 +1,6 @@
 # ipblower 🌪️
 
-**ipblower** is a blazingly fast, high-performance packet generator written in Rust. It leverages Linux's **AF_XDP** (eXpress Data Path) socket family to bypass the standard kernel network stack, allowing it to almost saturate at least 10GbE links using a single CPU core with 60 bytes packets (TCP SYN).
+**ipblower** is a blazingly fast, high-performance packet generator written in Rust. It leverages Linux's **AF_XDP** (eXpress Data Path) socket family to bypass the standard kernel network stack, allowing it to saturate at least 10GbE links using a single CPU core with 60 bytes packets (TCP SYN).
 
 This has been tested on 
 * Intel Corporation Ethernet 10G 2P X520 Adapter (rev 01), 
@@ -14,6 +14,7 @@ This has been tested on
 # Performance
 * with Intel X520 and single core and queue we achieved 10.5 Mpps with the above system configuration.
 * with Intel X710 and single core and queue we achieved 13.3 Mpps with the above system configuration.
+* with Intel X520 and 4 workers/cores/queues we achieved up to 3.5 Mpps per queue (up to 14 Mpps total) on an old Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz
 
 ## 🧠 Background: Why AF_XDP?
 
@@ -43,21 +44,9 @@ Traditionally, to achieve wire-speed packet generation in userspace, developers 
 
 ## 🚀 Installation 
 
-ipblower binary is available as a docker container: 
-
-```bash
-docker pull ghcr.io/rstade/ipblower:latest
-```
-
 ## 💻 Usage
 
 Because `ipblower` interacts directly with the NIC hardware and loads eBPF programs, it must be run with `sudo` or `CAP_NET_ADMIN` privileges.
-
-Example for running with docker:
-
-```
-docker run -it --rm   --network host   --privileged   --ulimit memlock=-1   -e RUST_LOG=info   ghcr.io/rstade/ipblower:latest -i enp114s0f1np1 -p 1M -b 128
-```
 
 ### CLI Options
 
@@ -67,19 +56,22 @@ High-performance packet generator using AF_XDP
 Usage: ipblower [OPTIONS] --interface <INTERFACE>
 
 Options:
-  -i, --interface <INTERFACE>  Interface name (e.g., eth0 or enp114s0f1)
-  -p, --pps <PPS>              Packets per second string (e.g., "10M", "100k", or "max") [default: max]
-  -b, --batch-sz <BATCH_SZ>    Batch size for processing packets [default: 64]
-      --no-zerocopy            Disable zerocopy (enabled by default)
-  -c, --core <CORE>            CPU core ID for the worker thread [default: 0]
-   d, --dst <DST>              Destination IP and MAC address (format: <ip>-<mac>)
-                               Examples: 192.168.1.1-aa:bb:cc:dd:ee:ff
-                                        192.168.1.1 (MAC uses default)
-                                        -aa:bb:cc:dd:ee:ff (IP uses default)
-  -h, --help                   Print help
-  -V, --version                Print version
+  -i, --interface <INTERFACE>    Interface name (e.g., eth0 or enp114s0f1)
+  -p, --pps <PPS>                Packets per second string (e.g., "10M", "100k", or "max") [default: max]
+  -n, --no-packets <NO_PACKETS>  Number of packets to generate (e.g., "10M", "100k", "1G", or "0" for unlimited) [default: 0]
+  -b, --batch-sz <BATCH_SZ>      Batch size for processing packets [default: 64]
+      --no-zerocopy              Disable zerocopy (enabled by default)
+  -c, --core <CORE>              CPU core ID for the worker thread [default: 0]
+  -w, --workers <WORKERS>        Number of worker threads (1-4), each on separate core and TX queue [default: 1]
+  -d, --dst <DST>                Destination IP and MAC address (format: <ip>-<mac>)
+                                 Examples: 192.168.1.1-aa:bb:cc:dd:ee:ff
+                                          192.168.1.1 (MAC uses default)
+                                          -aa:bb:cc:dd:ee:ff (IP uses default)
+  -h, --help                     Print help
+  -V, --version                  Print version
 
 ```
+
 ### Examples
 
 **1. The "Firehose" (Maximum Speed)**
@@ -112,12 +104,24 @@ Specify only the destination MAC address, IP will use default `192.168.177.1`:
 sudo ipblower -i enp114s0f1 -d -aa:bb:cc:dd:ee:ff
 ```
 
-**6. Software Fallback / Compatibility Mode**
+**6. Limited Packet Count**
+Generate exactly 100 million packets and then stop:
+```bash
+sudo ipblower -i enp114s0f1 -n 100M
+```
+
+**7. Multiple Workers for Higher Throughput**
+Use 4 worker threads on separate cores and TX queues to maximize throughput (up to 14 Mpps):
+```bash
+sudo ipblower -i enp114s0f1 -w 4 -c 0
+```
+This will spawn 4 workers starting from core 0 (cores 0, 1, 2, 3), each using a separate TX queue.
+
+**8. Software Fallback / Compatibility Mode**
 If your NIC driver does not support hardware Zero-Copy, or if you are testing on a virtual interface (veth), use the `--no-zerocopy` flag to fall back to standard kernel SKB copy-mode.
 ```bash
 sudo ipblower -i enp114s0f1 --no-zerocopy
 ```
-
 
 ---
 
@@ -139,7 +143,3 @@ sudo ip link set dev enp114s0f1 up
 If you are struggling to approach physical line-rate (e.g., 14.88 Mpps for 10GbE), try increasing the batch size.
 * `-b 64`: Good balance of latency and throughput.
 * `-b 128`: Maximizes throughput by minimizing the number of `poll()` syscalls and wakeups to the hardware driver.
-
----
-## ⚖️ Disclaimer
-**Use at your own risk.** This tool is provided "as-is" without any warranty. Traffic generation can impact network stability; ensure you have permission before testing on any network. The author is not responsible for any damages, legal issues, or network outages caused by the use of this software.
