@@ -10,6 +10,7 @@ This has been tested on
 * a single performance core of Intel© Core™ i7-14700K × 20,
 * Linux Mint 22.2 Cinnamon,
   * Kernel 6.8.0-90-generic
+  * Kernel 6.17.0-14-generic
 
 # Performance
 * with Intel X520 and single core and queue we achieved 10.5 Mpps with the above system configuration.
