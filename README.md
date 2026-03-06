@@ -144,3 +144,12 @@ sudo ip link set dev enp114s0f1 up
 If you are struggling to approach physical line-rate (e.g., 14.88 Mpps for 10GbE), try increasing the batch size.
 * `-b 64`: Good balance of latency and throughput.
 * `-b 128`: Maximizes throughput by minimizing the number of `poll()` syscalls and wakeups to the hardware driver.
+
+## ⚠️ Compatibility Note: RHEL / Rocky / Fedora
+Currently, **ipblower** may fail to load BPF skeletons when running inside a Docker container on RHEL-based distributions (Rocky Linux, CentOS, AlmaLinux).
+
+**The Error:** `libbpf: Error in bpf_object__probe_loading(): Operation not permitted(1)`
+
+**Cause:** This is due to strict Kernel Lockdown and BPF LSM settings in RHEL-based kernels that restrict BPF system calls from within container namespaces, even when running with `--privileged`.
+
+**Workaround:** For these distributions, it is recommended to run the binary **directly on the host** rather than via Docker.
